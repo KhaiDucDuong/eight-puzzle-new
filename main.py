@@ -15,6 +15,9 @@ class Game:
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(title)
         self.clock = pygame.time.Clock()
+        self.board_setting = 1
+        self.tile_size = board_setting_1.TILESIZE.value
+        self.game_size = board_setting_1.GAME_SIZE.value
         self.shuffle_time = 0
         self.start_shuffle = False
         self.previous_choice = ""
@@ -28,6 +31,23 @@ class Game:
         self.no_solution = 0
         self.max_depth = 15
         self.saved_state = self.create_game()
+        self.default_image_path = "resources/evening_sky.jpg"
+        self.puzzle_image = Sprite(0, 0, self.default_image_path, self.tile_size * self.game_size, self.tile_size * self.game_size)
+        self.puzzle_image_segments = [self.split_img_into_segments()]
+
+    def load_puzzle_img(self, img_path = None):
+        if(img_path != None):
+            self.default_image_path = img_path
+        self.puzzle_image = Sprite(0, 0, self.default_image_path, self.tile_size * self.game_size, self.tile_size * self.game_size) 
+        self.puzzle_image_segments = self.split_img_into_segments()
+        
+    def split_img_into_segments(self):
+        img_segments = []
+        for i in range(self.game_size):
+            for j in range(self.game_size):
+                rect = pygame.Rect(self.tile_size * j, self.tile_size * i, self.tile_size, self.tile_size)
+                img_segments.append(self.puzzle_image.getSurface().subsurface(rect))
+        return img_segments
 
     def get_high_scores(self):
         with open("high_score.txt", "r") as file:
@@ -39,7 +59,7 @@ class Game:
             file.write(str("%.3f\n" % self.high_score))
 
     def create_game(self):
-        grid = [[x + y * GAME_SIZE for x in range(1, GAME_SIZE + 1)] for y in range(GAME_SIZE)]
+        grid = [[x + y * self.game_size for x in range(1, self.game_size + 1)] for y in range(self.game_size)]
         grid[-1][-1] = 0
         return grid
 
@@ -73,8 +93,12 @@ class Game:
                             return [row, col]
 
     def BFS_solve(self):
+        self.draw(1)
+        UIElement(725, 550, "Solving...").draw(self.screen)
+        pygame.display.flip()
+
         self.no_solution = 0
-        p = BFS(self.tiles_grid, self.tiles_grid_completed, GAME_SIZE)
+        p = BFS(self.tiles_grid, self.tiles_grid_completed, self.game_size)
         p.solve()
 
         if p.is_solved:
@@ -82,11 +106,16 @@ class Game:
             self.num_explored = p.node_counter
         else:
             self.no_solution = 1
+        self.is_solving = 0
 
     def DFS_solve(self):
+        self.draw(1)
+        UIElement(725, 550, "Solving...").draw(self.screen)
+        pygame.display.flip()
+
         self.no_solution = 0
 
-        p = DFS(self.tiles_grid, self.tiles_grid_completed, GAME_SIZE, self.max_depth)
+        p = DFS(self.tiles_grid, self.tiles_grid_completed, self.game_size, self.max_depth)
         p.solve()
         if p.is_solved:
             self.solution = p.moves
@@ -95,9 +124,13 @@ class Game:
             self.no_solution = 1
 
     def IDDFS_solve(self):
+        self.draw(1)
+        UIElement(725, 550, "Solving...").draw(self.screen)
+        pygame.display.flip()
+
         self.no_solution = 0
 
-        p = IDDFS(self.tiles_grid, self.tiles_grid_completed, GAME_SIZE, self.max_depth)
+        p = IDDFS(self.tiles_grid, self.tiles_grid_completed, self.game_size, self.max_depth)
         p.solve()
         if p.is_solved:
             self.solution = p.moves
@@ -158,14 +191,16 @@ class Game:
             self.tiles.append([])
             for col, tile in enumerate(x):
                 if tile != 0:
-                    self.tiles[row].append(Tile(self, col, row, str(tile)))
+                    #self.tiles[row].append(Tile(self, col, row, str(tile)))
+                    self.tiles[row].append(Tile(self, col, row, str(tile), self.tile_size, self.game_size, self.puzzle_image_segments[tile - 1]))
                 else:
-                    self.tiles[row].append(Tile(self, col, row, "empty"))
+                    self.tiles[row].append(Tile(self, col, row, "empty", self.tile_size, self.game_size))
 
     def new(self):
         self.all_sprites = pygame.sprite.Group()
         self.tiles_grid = self.create_game()
         self.tiles_grid_completed = self.create_game()
+        self.load_puzzle_img()
         self.elapsed_time = 0
         self.total_moves = 0
         self.start_timer = False
@@ -177,6 +212,7 @@ class Game:
         self.buttons_list.append(Button(425, 170, 200, 50, "Save State", WHITE, BLACK))
         self.buttons_list.append(Button(700, 170, 200, 50, "Load State", WHITE, BLACK))
         self.buttons_list.append(Button(975, 170, 200, 50, "Reset", WHITE, BLACK))
+        self.buttons_list.append(Button(975, 240, 200, 50, "Change Size", WHITE, BLACK))
         self.buttons_list.append(Button(425, 240, 200, 50, "BFS Solve", WHITE, BLACK))
         self.buttons_list.append(Button(425, 310, 200, 50, "DFS Solve", WHITE, BLACK))
         self.buttons_list.append(Button(700, 240, 200, 50, "IDDFS Solve", WHITE, BLACK))
@@ -221,12 +257,12 @@ class Game:
         self.all_sprites.update()
 
     def draw_grid(self):
-        for row in range(-1, GAME_SIZE * TILESIZE, TILESIZE):
-            pygame.draw.line(self.screen, LIGHTGREY, (row, 0), (row, GAME_SIZE * TILESIZE))
-        for col in range(-1, GAME_SIZE * TILESIZE, TILESIZE):
-            pygame.draw.line(self.screen, LIGHTGREY, (0, col), (GAME_SIZE * TILESIZE, col))
+        for row in range(-1, self.game_size * self.tile_size, self.tile_size):
+            pygame.draw.line(self.screen, LIGHTGREY, (row, 0), (row, self.game_size * self.tile_size))
+        for col in range(-1, self.game_size * self.tile_size, self.tile_size):
+            pygame.draw.line(self.screen, LIGHTGREY, (0, col), (self.game_size * self.tile_size, col))
 
-    def draw(self):
+    def draw(self, is_solving = 0):
         self.screen.fill(BGCOLOUR)
         self.all_sprites.draw(self.screen)
         self.draw_grid()
@@ -234,12 +270,13 @@ class Game:
             button.draw(self.screen)
         UIElement(425, 35, "%.3f" % self.elapsed_time).draw(self.screen)
         UIElement(700, 35, "DFS Depth: " + str(self.max_depth)).draw(self.screen)
-        UIElement(430, 450, "High Score - %.3f" % (self.high_score if self.high_score > 0 else 0)).draw(self.screen)
-        UIElement(485, 500, "Total moves: " + str(self.total_moves)).draw(self.screen)
-        if(self.no_solution == 1):
-            UIElement(125, 550, "No solution for chosen algorithm").draw(self.screen)
-        if(self.num_explored != 0):
-            UIElement(225, 550, "State explored: " + str(self.num_explored)).draw(self.screen)
+        UIElement(630, 450, "High Score - %.3f" % (self.high_score if self.high_score > 0 else 0)).draw(self.screen)
+        UIElement(685, 500, "Total moves: " + str(self.total_moves)).draw(self.screen)
+        if(self.no_solution == 1 and is_solving == 0):
+            UIElement(525, 550, "No solution for chosen algorithm").draw(self.screen)
+        if(self.num_explored != 0 and is_solving == 0):
+            UIElement(625, 550, "State explored: " + str(self.num_explored)).draw(self.screen)
+        self.screen.blit(self.puzzle_image.getSurface(), (0, self.tile_size * self.game_size + 20))
         pygame.display.flip()
 
     def events(self):
@@ -284,6 +321,20 @@ class Game:
                             self.tiles_grid = [row[:] for row in self.saved_state]
                             self.draw_tiles()
                         if button.text == "Reset":
+                            self.new()
+                        if button.text == "Change Size":
+                            if(self.board_setting == 1):
+                                self.board_setting = 2
+                                self.tile_size = board_setting_2.TILESIZE.value
+                                self.game_size = board_setting_2.GAME_SIZE.value
+                            elif(self.board_setting == 2):
+                                self.board_setting = 3
+                                self.tile_size = board_setting_3.TILESIZE.value
+                                self.game_size = board_setting_3.GAME_SIZE.value
+                            elif(self.board_setting == 3):
+                                self.board_setting = 1
+                                self.tile_size = board_setting_1.TILESIZE.value
+                                self.game_size = board_setting_1.GAME_SIZE.value
                             self.new()
                         if button.text == "BFS Solve":
                             self.total_moves = 0
