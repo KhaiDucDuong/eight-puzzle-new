@@ -18,7 +18,7 @@ class Game:
         self.board_setting = 1
         self.tile_size = board_setting_1.TILESIZE.value
         self.game_size = board_setting_1.GAME_SIZE.value
-        self.shuffle_time = 0
+        self.shuffle_time = 13
         self.start_shuffle = False
         self.previous_choice = ""
         self.start_game = False
@@ -207,8 +207,10 @@ class Game:
         self.start_game = False
         self.buttons_list = []
         self.buttons_list.append(Button(425, 100, 200, 50, "Shuffle", WHITE, BLACK))
-        self.buttons_list.append(Button(700, 100, 100, 50, "<<", WHITE, BLACK))
-        self.buttons_list.append(Button(850, 100, 100, 50, ">>", WHITE, BLACK))
+        self.buttons_list.append(Button(700, 100, 75, 50, "<<", WHITE, BLACK))
+        self.buttons_list.append(Button(825, 100, 75, 50, ">>", WHITE, BLACK))
+        self.buttons_list.append(Button(975, 100, 75, 50, "<-", WHITE, BLACK))
+        self.buttons_list.append(Button(1100, 100, 75, 50, "->", WHITE, BLACK))
         self.buttons_list.append(Button(425, 170, 200, 50, "Save State", WHITE, BLACK))
         self.buttons_list.append(Button(700, 170, 200, 50, "Load State", WHITE, BLACK))
         self.buttons_list.append(Button(975, 170, 200, 50, "Reset", WHITE, BLACK))
@@ -244,8 +246,8 @@ class Game:
         if self.start_shuffle:
             self.shuffle()
             self.draw_tiles()
-            self.shuffle_time += 1
-            if self.shuffle_time > 18 - 1:
+            self.remaining_shuffle -= 1
+            if self.remaining_shuffle == 0:
                 self.start_shuffle = False
                 self.start_game = True
                 self.start_timer = True
@@ -270,6 +272,7 @@ class Game:
             button.draw(self.screen)
         UIElement(425, 35, "%.3f" % self.elapsed_time).draw(self.screen)
         UIElement(700, 35, "DFS Depth: " + str(self.max_depth)).draw(self.screen)
+        UIElement(975, 35, "Shuffle: " + str(self.shuffle_time)).draw(self.screen)
         UIElement(630, 450, "High Score - %.3f" % (self.high_score if self.high_score > 0 else 0)).draw(self.screen)
         UIElement(685, 500, "Total moves: " + str(self.total_moves)).draw(self.screen)
         if(self.no_solution == 1 and is_solving == 0):
@@ -311,7 +314,7 @@ class Game:
                 for button in self.buttons_list:
                     if button.click(mouse_x, mouse_y):
                         if button.text == "Shuffle":
-                            self.shuffle_time = 0
+                            self.remaining_shuffle = self.shuffle_time
                             self.total_moves = 0
                             self.start_shuffle = True
                         if button.text == "Save State":
@@ -336,6 +339,7 @@ class Game:
                                 self.tile_size = board_setting_1.TILESIZE.value
                                 self.game_size = board_setting_1.GAME_SIZE.value
                             self.new()
+                            self.saved_state = self.create_game()
                         if button.text == "BFS Solve":
                             self.total_moves = 0
                             self.num_explored = 0
@@ -354,6 +358,11 @@ class Game:
                         if button.text == ">>":
                             if(self.max_depth < 100):
                                 self.max_depth += 1
+                        if button.text == "<-":
+                            if(self.shuffle_time > 1):
+                                self.shuffle_time -= 1
+                        if button.text == "->":
+                            self.shuffle_time += 1
                             
 
 
