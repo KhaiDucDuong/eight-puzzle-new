@@ -4,8 +4,10 @@ import time
 import numpy as np
 from sprite import *
 from settings import *
-from eight_puzzle import *
-# import multiprocessing
+from BFS import BFS
+from DFS import DFS
+from IDDFS import IDDFS
+
 
 class Game:
     def __init__(self):
@@ -24,8 +26,8 @@ class Game:
         self.total_moves = 0
         self.num_explored = 0
         self.no_solution = 0
-        self.max_depth = 10
-        self.is_solving = False
+        self.max_depth = 15
+        self.saved_state = self.create_game()
 
     def get_high_scores(self):
         with open("high_score.txt", "r") as file:
@@ -40,12 +42,6 @@ class Game:
         grid = [[x + y * GAME_SIZE for x in range(1, GAME_SIZE + 1)] for y in range(GAME_SIZE)]
         grid[-1][-1] = 0
         return grid
-
-    def get0Pos(self):
-        for row, tiles in enumerate(self.tiles):
-                    for col, tile in enumerate(tiles):
-                        if self.tiles_grid[row][col] == 0:
-                            return (row, col)
 
     def doAction(self, action):
         match action:
@@ -77,97 +73,37 @@ class Game:
                             return [row, col]
 
     def BFS_solve(self):
-        start = np.zeros((GAME_SIZE, GAME_SIZE))
-        goal = np.zeros((GAME_SIZE, GAME_SIZE))
-            
-        for row, tiles in enumerate(self.tiles):
-                    for col, tile in enumerate(tiles):
-                        start[row][col] = self.tiles_grid[row][col]
-        
-        for row, tiles in enumerate(self.tiles):
-                    for col, tile in enumerate(tiles):
-                        goal[row][col] = self.tiles_grid_completed[row][col]
-
-        startPos = self.get0Pos()
-        startIndex = (startPos[0], startPos[1])
-        goalIndex = self.get0Pos()
-
         self.no_solution = 0
+        p = BFS(self.tiles_grid, self.tiles_grid_completed, GAME_SIZE)
+        p.solve()
 
-        p = Puzzle(start, startIndex, goal, goalIndex, size=GAME_SIZE)
-        p.BFSsolve()
-        if(self.solution is not None):
-            self.solution = p.solution[0]
-            self.num_explored = p.num_explored
+        if p.is_solved:
+            self.solution = p.moves
+            self.num_explored = p.node_counter
         else:
             self.no_solution = 1
 
-    def DFS_solve(self, max_move):
-        start = np.zeros((GAME_SIZE, GAME_SIZE))
-        goal = np.zeros((GAME_SIZE, GAME_SIZE))
-            
-        for row, tiles in enumerate(self.tiles):
-                    for col, tile in enumerate(tiles):
-                        start[row][col] = self.tiles_grid[row][col]
-        
-        for row, tiles in enumerate(self.tiles):
-                    for col, tile in enumerate(tiles):
-                        goal[row][col] = self.tiles_grid_completed[row][col]
-
-        startPos = self.get0Pos()
-        startIndex = (startPos[0], startPos[1])
-        goalIndex = self.get0Pos()
-            
+    def DFS_solve(self):
         self.no_solution = 0
-        
-        p = Puzzle(start, startIndex, goal, goalIndex, max_cost=max_move, size=GAME_SIZE)
-        p.DFSsolve()
-        
-        if(p.solution is not None):
-            self.solution = p.solution[0]
-            self.num_explored = p.num_explored
+
+        p = DFS(self.tiles_grid, self.tiles_grid_completed, GAME_SIZE, self.max_depth)
+        p.solve()
+        if p.is_solved:
+            self.solution = p.moves
+            self.num_explored = p.node_counter
         else:
             self.no_solution = 1
 
-    def A_solve(self):
-        start = np.zeros((GAME_SIZE, GAME_SIZE))
-        goal = np.zeros((GAME_SIZE, GAME_SIZE))
-            
-        for row, tiles in enumerate(self.tiles):
-                    for col, tile in enumerate(tiles):
-                        start[row][col] = self.tiles_grid[row][col]
-        
-        for row, tiles in enumerate(self.tiles):
-                    for col, tile in enumerate(tiles):
-                        goal[row][col] = self.tiles_grid_completed[row][col]
-
-        for row, tiles in enumerate(self.tiles):
-                    for col, tile in enumerate(tiles):
-                        start[row][col] = self.tiles_grid[row][col]
-        
-        for row, tiles in enumerate(self.tiles):
-                    for col, tile in enumerate(tiles):
-                        goal[row][col] = self.tiles_grid_completed[row][col]
-
-        startPos = self.get0Pos()
-        startIndex = (startPos[0], startPos[1])
-        goalIndex = (2, 2)
-        
-        startPos = self.get0Pos()
-        startIndex = (startPos[0], startPos[1])
-        goalIndex = (2, 2)
-        
+    def IDDFS_solve(self):
         self.no_solution = 0
-        
-        p = Puzzle(start, startIndex, goal, goalIndex, size=GAME_SIZE)
-        p.A_solve()
-        
-        if(p.solution is not None):
-            self.solution = p.solution[0]
-            self.num_explored = p.num_explored
+
+        p = IDDFS(self.tiles_grid, self.tiles_grid_completed, GAME_SIZE, self.max_depth)
+        p.solve()
+        if p.is_solved:
+            self.solution = p.moves
+            self.num_explored = p.node_counter
         else:
             self.no_solution = 1
-
 
     def swapTiles(self, tile):
         blankTile = self.get0Pos()
@@ -236,12 +172,14 @@ class Game:
         self.start_game = False
         self.buttons_list = []
         self.buttons_list.append(Button(425, 100, 200, 50, "Shuffle", WHITE, BLACK))
-        self.buttons_list.append(Button(425, 170, 200, 50, "Reset", WHITE, BLACK))
+        self.buttons_list.append(Button(700, 100, 100, 50, "<<", WHITE, BLACK))
+        self.buttons_list.append(Button(850, 100, 100, 50, ">>", WHITE, BLACK))
+        self.buttons_list.append(Button(425, 170, 200, 50, "Save State", WHITE, BLACK))
+        self.buttons_list.append(Button(700, 170, 200, 50, "Load State", WHITE, BLACK))
+        self.buttons_list.append(Button(975, 170, 200, 50, "Reset", WHITE, BLACK))
         self.buttons_list.append(Button(425, 240, 200, 50, "BFS Solve", WHITE, BLACK))
-        self.buttons_list.append(Button(712, 240, 200, 50, "A* Solve", WHITE, BLACK))
         self.buttons_list.append(Button(425, 310, 200, 50, "DFS Solve", WHITE, BLACK))
-        self.buttons_list.append(Button(700, 100, 75, 50, "<<", WHITE, BLACK))
-        self.buttons_list.append(Button(850, 100, 75, 50, ">>", WHITE, BLACK))
+        self.buttons_list.append(Button(700, 240, 200, 50, "IDDFS Solve", WHITE, BLACK))
         self.draw_tiles()
 
     def run(self):
@@ -251,10 +189,6 @@ class Game:
             self.events()
             self.update()
             self.draw()
-
-    def run_timer(self):
-        self.start_game = True
-        self.start_timer = True
 
     def update(self):
         if self.start_game:
@@ -275,9 +209,10 @@ class Game:
             self.shuffle()
             self.draw_tiles()
             self.shuffle_time += 1
-            if self.shuffle_time > 8:
+            if self.shuffle_time > 18 - 1:
                 self.start_shuffle = False
-                self.run_timer()
+                self.start_game = True
+                self.start_timer = True
         
         if len(self.solution) > 0:
             self.doAction(self.solution.pop(0))
@@ -305,8 +240,6 @@ class Game:
             UIElement(125, 550, "No solution for chosen algorithm").draw(self.screen)
         if(self.num_explored != 0):
             UIElement(225, 550, "State explored: " + str(self.num_explored)).draw(self.screen)
-        if(self.is_solving == True):
-            UIElement(125, 550, "Solving...").draw(self.screen) 
         pygame.display.flip()
 
     def events(self):
@@ -344,27 +277,34 @@ class Game:
                             self.shuffle_time = 0
                             self.total_moves = 0
                             self.start_shuffle = True
+                        if button.text == "Save State":
+                            self.saved_state = [row[:] for row in self.tiles_grid]
+                        if button.text == "Load State":
+                            self.new()
+                            self.tiles_grid = [row[:] for row in self.saved_state]
+                            self.draw_tiles()
                         if button.text == "Reset":
                             self.new()
                         if button.text == "BFS Solve":
                             self.total_moves = 0
-                            self.num_explored = 0;
+                            self.num_explored = 0
                             self.BFS_solve()
                         if button.text == "DFS Solve":
                             self.total_moves = 0
-                            self.num_explored = 0;
-                            self.DFS_solve(self.max_depth)
-                        if button.text == "A* Solve":
+                            self.num_explored = 0
+                            self.DFS_solve()
+                        if button.text == "IDDFS Solve":
                             self.total_moves = 0
                             self.num_explored = 0
-                            self.A_solve()
+                            self.IDDFS_solve()
+                        if button.text == "<<":
+                            if(self.max_depth > 1):
+                                self.max_depth -= 1
                         if button.text == ">>":
                             if(self.max_depth < 100):
                                 self.max_depth += 1
-                        if button.text == "<<":
-                            if(self.max_depth > 1):
-                                self.max_depth -=1
-    
+                            
+
 
 game = Game()
 while True:
