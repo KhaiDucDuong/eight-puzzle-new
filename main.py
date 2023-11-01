@@ -2,6 +2,8 @@ import pygame
 import random
 import time
 import numpy as np
+import tkinter as tk
+from tkinter import filedialog
 from sprite import *
 from settings import *
 from BFS import BFS
@@ -34,6 +36,15 @@ class Game:
         self.default_image_path = "resources/evening_sky.jpg"
         self.puzzle_image = Sprite(0, 0, self.default_image_path, self.tile_size * self.game_size, self.tile_size * self.game_size)
         self.puzzle_image_segments = [self.split_img_into_segments()]
+
+    def select_img_file(self):
+        file_path = filedialog.askopenfilename()
+        try:
+            if(file_path != ''):    
+                self.load_puzzle_img(file_path)
+        except:
+            print("cannot load image!")
+            self.default_image_path = "resources/evening_sky.jpg"
 
     def load_puzzle_img(self, img_path = None):
         if(img_path != None):
@@ -217,6 +228,7 @@ class Game:
         self.buttons_list.append(Button(975, 240, 200, 50, "Change Size", WHITE, BLACK))
         self.buttons_list.append(Button(425, 240, 200, 50, "BFS Solve", WHITE, BLACK))
         self.buttons_list.append(Button(425, 310, 200, 50, "DFS Solve", WHITE, BLACK))
+        self.buttons_list.append(Button(975, 310, 200, 50, "Load IMG", WHITE, BLACK))
         self.buttons_list.append(Button(700, 240, 200, 50, "IDDFS Solve", WHITE, BLACK))
         self.draw_tiles()
 
@@ -363,6 +375,9 @@ class Game:
                                 self.shuffle_time -= 1
                         if button.text == "->":
                             self.shuffle_time += 1
+                        if button.text == "Load IMG":
+                            self.select_img_file()
+                            self.draw_tiles()
                             
 
 
