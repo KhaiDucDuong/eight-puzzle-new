@@ -33,6 +33,7 @@ class Game:
         self.num_explored = 0
         self.no_solution = 0
         self.max_depth = 15
+        self.heuristic_mode = 'Misplaced tiles'
         self.saved_state = self.create_game()
         self.default_image_path = "resources/evening_sky.jpg"
         self.puzzle_image = Sprite(0, 0, self.default_image_path, self.tile_size * self.game_size, self.tile_size * self.game_size)
@@ -158,7 +159,7 @@ class Game:
 
         self.no_solution = 0
 
-        p = A_star(self.tiles_grid, self.tiles_grid_completed, self.game_size)
+        p = A_star(self.tiles_grid, self.tiles_grid_completed, self.game_size, self.heuristic_mode)
         p.solve()
         if p.is_solved:
             self.solution = p.moves
@@ -247,6 +248,7 @@ class Game:
         self.buttons_list.append(Button(425, 310, 200, 50, "DFS Solve", WHITE, BLACK))
         self.buttons_list.append(Button(700, 310, 200, 50, "A* Solve", WHITE, BLACK))
         self.buttons_list.append(Button(975, 310, 200, 50, "Load IMG", WHITE, BLACK))
+        self.buttons_list.append(Button(975, 380, 200, 50, "Change Mode", WHITE, BLACK))
         self.buttons_list.append(Button(700, 240, 200, 50, "IDDFS Solve", WHITE, BLACK))
         self.draw_tiles()
 
@@ -303,6 +305,7 @@ class Game:
         UIElement(425, 35, "%.3f" % self.elapsed_time).draw(self.screen)
         UIElement(700, 35, "DFS Depth: " + str(self.max_depth)).draw(self.screen)
         UIElement(975, 35, "Shuffle: " + str(self.shuffle_time)).draw(self.screen)
+        UIElement(425, 400, "Heuristic: " + self.heuristic_mode).draw(self.screen)
         UIElement(630, 450, "High Score - %.3f" % (self.high_score if self.high_score > 0 else 0)).draw(self.screen)
         UIElement(685, 500, "Total moves: " + str(self.total_moves)).draw(self.screen)
         if(self.no_solution == 1 and is_solving == 0):
@@ -400,6 +403,11 @@ class Game:
                         if button.text == "Load IMG":
                             self.select_img_file()
                             self.draw_tiles()
+                        if button.text == "Change Mode":
+                            if self.heuristic_mode == 'Misplaced tiles':
+                                self.heuristic_mode = 'Manhattan distance'
+                            else:
+                                self.heuristic_mode = 'Misplaced tiles'
                             
 
 

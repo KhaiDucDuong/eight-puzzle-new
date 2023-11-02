@@ -83,7 +83,7 @@ class A_star:
                         correct_tile_c = self.size - 1
                     else:
                         correct_tile_c = tile_value % self.size - 1
-                    h = abs(correct_tile_r - r) + abs(correct_tile_c - c)
+                    h += abs(correct_tile_r - r) + abs(correct_tile_c - c)
         return h
     
     def solve(self):
