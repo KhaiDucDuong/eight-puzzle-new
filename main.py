@@ -9,6 +9,7 @@ from settings import *
 from BFS import BFS
 from DFS import DFS
 from IDDFS import IDDFS
+from A_star import A_star
 
 
 class Game:
@@ -38,13 +39,14 @@ class Game:
         self.puzzle_image_segments = [self.split_img_into_segments()]
 
     def select_img_file(self):
+        origin_file_path = self.default_image_path
         file_path = filedialog.askopenfilename()
         try:
             if(file_path != ''):    
                 self.load_puzzle_img(file_path)
         except:
             print("cannot load image!")
-            self.default_image_path = "resources/evening_sky.jpg"
+            self.default_image_path = origin_file_path
 
     def load_puzzle_img(self, img_path = None):
         if(img_path != None):
@@ -149,6 +151,21 @@ class Game:
         else:
             self.no_solution = 1
 
+    def A_star_solve(self):
+        self.draw(1)
+        UIElement(725, 550, "Solving...").draw(self.screen)
+        pygame.display.flip()
+
+        self.no_solution = 0
+
+        p = A_star(self.tiles_grid, self.tiles_grid_completed, self.game_size)
+        p.solve()
+        if p.is_solved:
+            self.solution = p.moves
+            self.num_explored = p.node_counter
+        else:
+            self.no_solution = 1
+
     def swapTiles(self, tile):
         blankTile = self.get0Pos()
         temp = self.tiles_grid[tile[0]][tile[1]]
@@ -228,6 +245,7 @@ class Game:
         self.buttons_list.append(Button(975, 240, 200, 50, "Change Size", WHITE, BLACK))
         self.buttons_list.append(Button(425, 240, 200, 50, "BFS Solve", WHITE, BLACK))
         self.buttons_list.append(Button(425, 310, 200, 50, "DFS Solve", WHITE, BLACK))
+        self.buttons_list.append(Button(700, 310, 200, 50, "A* Solve", WHITE, BLACK))
         self.buttons_list.append(Button(975, 310, 200, 50, "Load IMG", WHITE, BLACK))
         self.buttons_list.append(Button(700, 240, 200, 50, "IDDFS Solve", WHITE, BLACK))
         self.draw_tiles()
@@ -364,6 +382,10 @@ class Game:
                             self.total_moves = 0
                             self.num_explored = 0
                             self.IDDFS_solve()
+                        if button.text == "A* Solve":
+                            self.total_moves = 0
+                            self.num_explored = 0
+                            self.A_star_solve()
                         if button.text == "<<":
                             if(self.max_depth > 1):
                                 self.max_depth -= 1

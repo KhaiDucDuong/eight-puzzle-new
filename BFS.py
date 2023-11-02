@@ -41,7 +41,7 @@ class BFS:
 
     def solve(self):
         possible_moves = [(0, -1, 'left'), (0, 1, 'right'), (-1, 0, 'up'), (1, 0, 'down')]
-        initial_node = Node(self.start_state, None, None, 0)
+        initial_node = Node(self.start_state, None, None)
         queue = deque()
         queue.append(initial_node)
         #explored_states store visited states
