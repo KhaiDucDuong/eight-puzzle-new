@@ -2,11 +2,10 @@ from collections import deque
 import numpy as np
 
 class Node:
-        def __init__(self, state, parent, move, depth):
+        def __init__(self, state, parent, move):
             self.state = state
             self.parent = parent
             self.move = move
-            self.depth = depth
 
 class BFS:
     def __init__(self, start_state, goal_state, size):
@@ -64,8 +63,7 @@ class BFS:
                 if self.is_valid(new_r, new_c):
                     new_state = [row[:] for row in current_node.state]
                     new_state[r][c], new_state[new_r][new_c] = new_state[new_r][new_c], new_state[r][c]
-                    new_depth = current_node.depth + 1
-                    new_node = Node(new_state, current_node, move, new_depth)
+                    new_node = Node(new_state, current_node, move)
 
                     state_key = tuple(tuple(row) for row in new_state)
                     if state_key not in explored_states:
